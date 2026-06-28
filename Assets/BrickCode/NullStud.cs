@@ -1,3 +1,5 @@
+using System;
+
 namespace BrickCode
 {
     public class NullStud : Stud
@@ -6,5 +8,14 @@ namespace BrickCode
         {
          
         }
+        
+        public override Brick GetMemberBrick() { return null; }
+        public override Brick GetNeighbourBrick() { return null; }
+
+        public override void SetNeighbourBrick(Brick brick)
+        {
+            throw new NullReferenceException();
+        }
+
     }
 }

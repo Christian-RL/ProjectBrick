@@ -11,17 +11,17 @@ public class Stud
         Member = member;
     }
     
-    public Brick GetMemberBrick()
+    public virtual Brick GetMemberBrick()
     {
         return Member;
     }
 
-    public Brick GetNeighbourBrick()
+    public virtual Brick GetNeighbourBrick()
     {
         return Neighbour;
     }
 
-    public void SetNeighbourBrick(Brick brick)
+    public virtual void SetNeighbourBrick(Brick brick)
     {
         Neighbour = brick;
     }
