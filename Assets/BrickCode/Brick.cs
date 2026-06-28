@@ -25,6 +25,7 @@ public abstract class Brick
         this.StudLength = StudLength;
         this.TileHeight = TileHeight;
         BrickStuds = new Stud[StudWidth, StudLength];
+        InitialiseStuds();
     }
     
     private void InitialiseStuds()
