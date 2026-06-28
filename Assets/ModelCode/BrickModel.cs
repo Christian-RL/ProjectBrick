@@ -1,71 +1,125 @@
-using UnityEngine;
 using System.Collections.Generic;
 
-/**
- * Graph representation of a current model of bricks
- */
 public class BrickModelGraph
 {
-    private List<BrickModelNode>_Nodes{get;set;} =  new List<BrickModelNode>();
-    private BrickModelNode _CurrentNode{get;set;}
+    private readonly List<BrickModelNode> _nodes = new();
+    private readonly Dictionary<Brick, BrickModelNode> _nodeByBrick = new();
 
-    public BrickModelGraph()
+    private BrickModelNode _currentNode;
+
+    public BrickModelGraph(Brick startingBrick)
     {
+        _currentNode = GetOrCreateNode(startingBrick);
+        ConstructFrom(_currentNode);
     }
 
-    private void addBrickModelNode(BrickModelNode node)
+    private void ConstructFrom(BrickModelNode node)
     {
-        _Nodes.Add(node);
-        _CurrentNode = node;
-    }
+        Brick currentBrick = node.GetNodeBrick();
 
-    private BrickModelNode getCurrentNode()
-    {
-        return _CurrentNode;
-    }
-    
-    private class BrickModelNode
-    {
-        private BrickModelNode Parent{get;set;}
-        private List<BrickModelNode> Children{get;set;}
-        
-        private Brick NodeBrick{get;set;}
-        
-        public BrickModelNode(BrickModelNode parent,  List<BrickModelNode> children, Brick nodeBrick)
+        Stud[,] brickStuds = currentBrick.GetStuds();
+
+        for (int x = 0; x < brickStuds.GetLength(0); x++)
         {
-            this.Parent = parent;
-            this.Children = children;
-            this.NodeBrick = nodeBrick;
+            for (int y = 0; y < brickStuds.GetLength(1); y++)
+            {
+                Stud stud = brickStuds[x, y];
+
+                if (stud == null)
+                {
+                    continue;
+                }
+
+                Brick neighbourBrick = stud.GetNeighbourBrick();
+
+                if (neighbourBrick == null)
+                {
+                    continue;
+                }
+
+                BrickModelNode neighbourNode = GetOrCreateNode(neighbourBrick);
+
+                if (!node.HasChild(neighbourNode))
+                {
+                    node.AddChild(neighbourNode);
+                }
+
+                if (!neighbourNode.HasChild(node))
+                {
+                    neighbourNode.AddChild(node);
+                }
+
+                if (!neighbourNode.HasBeenExpanded)
+                {
+                    ConstructFrom(neighbourNode);
+                }
+            }
+        }
+
+        node.HasBeenExpanded = true;
+    }
+
+    private BrickModelNode GetOrCreateNode(Brick brick)
+    {
+        if (_nodeByBrick.TryGetValue(brick, out BrickModelNode existingNode))
+        {
+            return existingNode;
+        }
+
+        BrickModelNode newNode = new BrickModelNode(brick);
+
+        _nodeByBrick.Add(brick, newNode);
+        _nodes.Add(newNode);
+
+        return newNode;
+    }
+
+    public List<BrickModelNode> GetNodes()
+    {
+        return _nodes;
+    }
+
+    public BrickModelNode GetCurrentNode()
+    {
+        return _currentNode;
+    }
+
+    public class BrickModelNode
+    {
+        private readonly List<BrickModelNode> _children = new();
+
+        private Brick _nodeBrick;
+
+        public bool HasBeenExpanded { get; set; }
+
+        public BrickModelNode(Brick nodeBrick)
+        {
+            _nodeBrick = nodeBrick;
         }
 
         public void AddChild(BrickModelNode child)
         {
-            this.Children.Add(child);
+            _children.Add(child);
+        }
+
+        public bool HasChild(BrickModelNode child)
+        {
+            return _children.Contains(child);
         }
 
         public List<BrickModelNode> GetChildren()
         {
-            return this.Children;
+            return _children;
         }
 
-        public void SetParent(BrickModelNode parent)
+        public void SetNodeBrick(Brick nodeBrick)
         {
-            this.Parent = parent;
-        }
-
-        public BrickModelNode GetParent()
-        {
-            return this.Parent;
-        }
-
-        public void setNodeBrick(Brick nodeBrick)
-        {
-            this.NodeBrick = nodeBrick;
+            _nodeBrick = nodeBrick;
         }
 
         public Brick GetNodeBrick()
         {
-            return this.NodeBrick;
+            return _nodeBrick;
         }
     }
 }
