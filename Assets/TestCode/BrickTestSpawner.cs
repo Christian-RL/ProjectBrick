@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/**
+ * Spawns in basic brick for visual testing
+ */
 public class BrickTestSpawner : MonoBehaviour
 {
     private void Start()
