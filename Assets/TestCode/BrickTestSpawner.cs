@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using BrickCode;
 /**
  * Spawns in basic brick for visual testing
  */
