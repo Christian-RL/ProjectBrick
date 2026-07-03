@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/**
+ * Creates visual for unity of basic rectangular brick
+ */
 public class BrickVisual : MonoBehaviour
 {
     private const float StudSpacing = 1.0f;
@@ -43,22 +46,18 @@ public class BrickVisual : MonoBehaviour
                 GameObject stud = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 stud.name = $"Stud {x},{z}";
                 stud.transform.SetParent(transform);
-
                 stud.transform.localScale = new Vector3(
                     StudDiameter,
                     StudHeight / 2f,
                     StudDiameter
                 );
-
                 float xPos = x - (width - 1) / 2f;
                 float zPos = z - (length - 1) / 2f;
-
                 stud.transform.localPosition = new Vector3(
                     xPos * StudSpacing,
                     bodyHeight + StudHeight / 2f,
                     zPos * StudSpacing
                 );
-
                 SetColour(stud, brick.GetColour());
             }
         }
