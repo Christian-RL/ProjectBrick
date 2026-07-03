@@ -1,11 +1,23 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+using BrickCode;
 public class CameraFlyController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 12f;
-    [SerializeField] private float fastMoveMultiplier = 2f;
-    [SerializeField] private float lookSensitivity = 0.55f;
+    [Header("Orbit")]
+    [SerializeField] private float orbitSensitivity = 0.35f;
+    [SerializeField] private float minPitch = -85f;
+    [SerializeField] private float maxPitch = 85f;
+
+    [Header("Pan")]
+    [SerializeField] private float panSensitivity = 0.01f;
+
+    [Header("Zoom")]
+    [SerializeField] private float zoomSensitivity = 0.08f;
+    [SerializeField] private float minFocusDistance = 1f;
+    [SerializeField] private float maxFocusDistance = 100f;
+
+    private Vector3 _focusPoint;
+    private float _focusDistance = 10f;
 
     private float _yaw;
     private float _pitch;
@@ -13,85 +25,110 @@ public class CameraFlyController : MonoBehaviour
     private void Start()
     {
         Vector3 angles = transform.eulerAngles;
+
         _yaw = angles.y;
         _pitch = angles.x;
+
+        _focusPoint = transform.position + transform.forward * _focusDistance;
     }
 
     private void Update()
     {
-        HandleMovement();
-        HandleLook();
-    }
-
-    private void HandleMovement()
-    {
-        if (Keyboard.current == null)
+        if (Mouse.current == null || Keyboard.current == null)
         {
             return;
         }
 
-        float speed = moveSpeed;
-
-        if (Keyboard.current.leftShiftKey.isPressed)
-        {
-            speed *= fastMoveMultiplier;
-        }
-
-        Vector3 movement = Vector3.zero;
-
-        if (Keyboard.current.wKey.isPressed)
-        {
-            movement += transform.forward;
-        }
-
-        if (Keyboard.current.sKey.isPressed)
-        {
-            movement -= transform.forward;
-        }
-
-        if (Keyboard.current.aKey.isPressed)
-        {
-            movement -= transform.right;
-        }
-
-        if (Keyboard.current.dKey.isPressed)
-        {
-            movement += transform.right;
-        }
-
-        if (Keyboard.current.spaceKey.isPressed)
-        {
-            movement += Vector3.up;
-        }
-
-        if (Keyboard.current.cKey.isPressed)
-        {
-            movement += Vector3.down;
-        }
-
-        transform.position += movement.normalized * speed * Time.deltaTime;
-    }
-
-    private void HandleLook()
-    {
-        if (Mouse.current == null)
+        // If a brick is being held, scroll should control the brick distance,
+        // not the camera zoom.
+        if (DraggableBrick3D.IsAnyBrickBeingDragged)
         {
             return;
         }
 
-        // Hold right click to look around
-        if (!Mouse.current.rightButton.isPressed)
+        // Prevent camera controls while interacting with the sidebar.
+        if (MenuCode.BrickSidebarSpawner.IsMouseOverSidebar)
+        {
+            return;
+        }
+
+        HandleZoom();
+        HandleOrbit();
+        HandlePan();
+
+        UpdateCameraPosition();
+    }
+
+    private void HandleOrbit()
+    {
+        bool altHeld =
+            Keyboard.current.leftAltKey.isPressed ||
+            Keyboard.current.rightAltKey.isPressed;
+
+        bool shiftHeld =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+        bool leftMouseHeld = Mouse.current.leftButton.isPressed;
+
+        if (!altHeld || shiftHeld || !leftMouseHeld)
         {
             return;
         }
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        _yaw += mouseDelta.x * lookSensitivity;
-        _pitch -= mouseDelta.y * lookSensitivity;
+        _yaw += mouseDelta.x * orbitSensitivity;
+        _pitch -= mouseDelta.y * orbitSensitivity;
 
-        _pitch = Mathf.Clamp(_pitch, -89f, 89f);
+        _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
+    }
 
-        transform.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+    private void HandlePan()
+    {
+        bool altHeld =
+            Keyboard.current.leftAltKey.isPressed ||
+            Keyboard.current.rightAltKey.isPressed;
+
+        bool shiftHeld =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+        bool leftMouseHeld = Mouse.current.leftButton.isPressed;
+
+        if (!altHeld || !shiftHeld || !leftMouseHeld)
+        {
+            return;
+        }
+
+        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+
+        Vector3 panMovement =
+            -transform.right * mouseDelta.x * panSensitivity * _focusDistance
+            - transform.up * mouseDelta.y * panSensitivity * _focusDistance;
+
+        _focusPoint += panMovement;
+    }
+
+    private void HandleZoom()
+    {
+        float scrollAmount = Mouse.current.scroll.ReadValue().y;
+
+        if (Mathf.Abs(scrollAmount) < 0.01f)
+        {
+            return;
+        }
+
+        _focusDistance -= scrollAmount * zoomSensitivity;
+        _focusDistance = Mathf.Clamp(_focusDistance, minFocusDistance, maxFocusDistance);
+    }
+
+    private void UpdateCameraPosition()
+    {
+        Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+        Vector3 cameraOffset = rotation * new Vector3(0f, 0f, -_focusDistance);
+
+        transform.position = _focusPoint + cameraOffset;
+        transform.rotation = rotation;
     }
 }
