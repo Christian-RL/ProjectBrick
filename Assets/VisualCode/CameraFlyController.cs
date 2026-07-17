@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using BrickCode;
+
+/**
+ * 3D modelling style camera that orbits around an invisible point in the scene.
+ */
 public class CameraFlyController : MonoBehaviour
 {
     [Header("Orbit")]
@@ -22,103 +26,61 @@ public class CameraFlyController : MonoBehaviour
     private float _yaw;
     private float _pitch;
 
+    /**
+     * Reads and stores camera's starting rotation.
+     */
     private void Start()
     {
         Vector3 angles = transform.eulerAngles;
-
         _yaw = angles.y;
         _pitch = angles.x;
-
         _focusPoint = transform.position + transform.forward * _focusDistance;
     }
 
+    /**
+     * Updates camera position if brick is not being dragged or mouse is over sidebar menu.
+     */
     private void Update()
     {
-        if (Mouse.current == null || Keyboard.current == null)
-        {
-            return;
-        }
-
-        // If a brick is being held, scroll should control the brick distance,
-        // not the camera zoom.
-        if (DraggableBrick3D.IsAnyBrickBeingDragged)
-        {
-            return;
-        }
-
-        // Prevent camera controls while interacting with the sidebar.
-        if (MenuCode.BrickSidebarSpawner.IsMouseOverSidebar)
-        {
-            return;
-        }
-
+        if (Mouse.current == null || Keyboard.current == null) return;
+        if (DraggableBrick3D.IsAnyBrickBeingDragged) return;
+        if (MenuCode.BrickSidebarSpawner.IsMouseOverSidebar) return;
         HandleZoom();
         HandleOrbit();
         HandlePan();
-
         UpdateCameraPosition();
     }
 
+    /**
+     * handles orbiting around the focus point.
+     */
     private void HandleOrbit()
     {
-        bool altHeld =
-            Keyboard.current.leftAltKey.isPressed ||
-            Keyboard.current.rightAltKey.isPressed;
-
-        bool shiftHeld =
-            Keyboard.current.leftShiftKey.isPressed ||
-            Keyboard.current.rightShiftKey.isPressed;
-
+        bool altHeld = BrickInput.AltOrOptionHeld();
+        bool shiftHeld = BrickInput.ShiftHeld();
         bool leftMouseHeld = Mouse.current.leftButton.isPressed;
-
-        if (!altHeld || shiftHeld || !leftMouseHeld)
-        {
-            return;
-        }
-
+        if (!altHeld || shiftHeld || !leftMouseHeld) return;
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-
         _yaw += mouseDelta.x * orbitSensitivity;
         _pitch -= mouseDelta.y * orbitSensitivity;
-
         _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
     }
-
+    
     private void HandlePan()
     {
-        bool altHeld =
-            Keyboard.current.leftAltKey.isPressed ||
-            Keyboard.current.rightAltKey.isPressed;
-
-        bool shiftHeld =
-            Keyboard.current.leftShiftKey.isPressed ||
-            Keyboard.current.rightShiftKey.isPressed;
-
+        bool altHeld = BrickInput.AltOrOptionHeld();
+        bool shiftHeld = BrickInput.ShiftHeld();
         bool leftMouseHeld = Mouse.current.leftButton.isPressed;
-
-        if (!altHeld || !shiftHeld || !leftMouseHeld)
-        {
-            return;
-        }
-
+        if (!altHeld || !shiftHeld || !leftMouseHeld) return;
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-
-        Vector3 panMovement =
-            -transform.right * mouseDelta.x * panSensitivity * _focusDistance
-            - transform.up * mouseDelta.y * panSensitivity * _focusDistance;
-
+        Vector3 panMovement = -transform.right * mouseDelta.x * panSensitivity * _focusDistance - transform.up * mouseDelta.y * panSensitivity * _focusDistance;
         _focusPoint += panMovement;
     }
 
     private void HandleZoom()
     {
         float scrollAmount = Mouse.current.scroll.ReadValue().y;
-
-        if (Mathf.Abs(scrollAmount) < 0.01f)
-        {
-            return;
-        }
-
+        if (Mathf.Abs(scrollAmount) < 0.01f) return;
         _focusDistance -= scrollAmount * zoomSensitivity;
         _focusDistance = Mathf.Clamp(_focusDistance, minFocusDistance, maxFocusDistance);
     }
@@ -127,7 +89,6 @@ public class CameraFlyController : MonoBehaviour
     {
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3 cameraOffset = rotation * new Vector3(0f, 0f, -_focusDistance);
-
         transform.position = _focusPoint + cameraOffset;
         transform.rotation = rotation;
     }
