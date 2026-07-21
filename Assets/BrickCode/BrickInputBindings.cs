@@ -42,16 +42,35 @@ namespace BrickCode
         {
             return AnyKeyHeld(disableSnappingKeys);
         }
+        
+        public bool RightMousePressedThisFrame()
+        {
+            return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
+        }
+
+        public bool RightMouseHeld()
+        {
+            return Mouse.current != null && Mouse.current.rightButton.isPressed;
+        }
+
+        public bool RightMouseReleasedThisFrame()
+        {
+            return Mouse.current != null && Mouse.current.rightButton.wasReleasedThisFrame;
+        }
 
         /**
          * Returns true if current inputs relate to the camera.
          */
         public bool CameraControlInputIsActive()
         {
-            if (Mouse.current == null) return false;
+            if (Mouse.current == null)
+            {
+                return false;
+            }
+
             bool middleMouseHeld = Mouse.current.middleButton.isPressed;
-            bool rightMouseHeld = Mouse.current.rightButton.isPressed;
-            return AnyKeyHeld(cameraModifierKeys) || middleMouseHeld || rightMouseHeld;
+
+            return AnyKeyHeld(cameraModifierKeys) || middleMouseHeld;
         }
         
         public bool LeftMousePressedThisFrame()

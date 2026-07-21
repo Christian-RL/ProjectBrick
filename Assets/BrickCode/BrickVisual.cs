@@ -69,7 +69,7 @@ namespace BrickCode
                         zPos * BrickObjectData.StudSpacing
                     );
                     Collider studCollider = stud.GetComponent<Collider>();
-                    if (!studCollider) Destroy(studCollider);
+                    if (studCollider) Destroy(studCollider);
                     data.RegisterStud(stud.transform);
                     SetColour(stud, brick.GetColour());
                 }

@@ -61,21 +61,28 @@ namespace BrickCode
 
             Quaternion gridRotation = SnapRotationToNearestRightAngle(targetRotation);
             BrickObjectData[] allBricks = FindObjectsOfType<BrickObjectData>(); //find every brick object in the scene
-            List<BrickSnapCandidate> topCandidates = new();
+            List<BrickSnapCandidate> studCandidates = new();
             List<BrickSnapCandidate> sideCandidates = new();
             foreach (BrickObjectData otherBrick in allBricks)
             {
-                if (!IsValidSnapTarget(otherBrick, mover)) continue;
-                AddTopSnapCandidates(targetPosition, gridRotation, otherBrick, topCandidates);
+                if (!IsValidSnapTarget(otherBrick, mover))
+                {
+                    continue;
+                }
+
+                AddTopSnapCandidates(targetPosition, gridRotation, otherBrick, studCandidates);
+                AddUndersideSnapCandidates(targetPosition, gridRotation, otherBrick, studCandidates);
                 AddSideSnapCandidates(targetPosition, gridRotation, otherBrick, sideCandidates);
             }
 
-            if (TryChooseBestCandidate(topCandidates, out BrickSnapCandidate bestTopCandidate)) //if top snap candidates exist, the best one is chosen.
+            if (TryChooseBestCandidate(studCandidates, out BrickSnapCandidate bestStudCandidate))
             {
-                snappedPosition = bestTopCandidate.Position;
-                snappedRotation = bestTopCandidate.Rotation;
-                _hasPendingStudConnection = bestTopCandidate.IsStudSnap;
-                _pendingStudConnection = bestTopCandidate;
+                snappedPosition = bestStudCandidate.Position;
+                snappedRotation = bestStudCandidate.Rotation;
+
+                _hasPendingStudConnection = bestStudCandidate.IsStudSnap;
+                _pendingStudConnection = bestStudCandidate;
+
                 return true;
             }
             if (TryChooseBestCandidate(sideCandidates, out BrickSnapCandidate bestSideCandidate)) //if no top snap candidate then chose best side snap candidate
@@ -303,6 +310,67 @@ namespace BrickCode
         {
             float spacing = BrickObjectData.StudSpacing;
             return gridOrigin + Mathf.Round((value - gridOrigin) / spacing) * spacing;
+        }
+        
+        private void AddUndersideSnapCandidates(
+            Vector3 targetPosition,
+            Quaternion targetRotation,
+            BrickObjectData otherBrick,
+            List<BrickSnapCandidate> candidates
+        )
+        {
+            float snapTopY = otherBrick.BodyBottomY;
+            float movingBrickTopY = targetPosition.y + _brickData.BodyHeight;
+
+            float verticalDistance = Mathf.Abs(movingBrickTopY - snapTopY);
+
+            if (verticalDistance > topSnapDistance)
+            {
+                return;
+            }
+
+            foreach (BrickObjectData.StudAnchor ownTopStud in _brickData.GetLocalTopStudAnchors())
+            {
+                Vector3 ownTopStudOffset = targetRotation * ownTopStud.Position;
+
+                foreach (BrickObjectData.StudAnchor otherBottomStud in otherBrick.GetLocalBottomStudAnchors())
+                {
+                    Vector3 otherBottomWorld = otherBrick.transform.TransformPoint(otherBottomStud.Position);
+                    otherBottomWorld.y = snapTopY;
+
+                    Vector3 candidatePosition = otherBottomWorld - ownTopStudOffset;
+
+                    candidatePosition.y = snapTopY - _brickData.BodyHeight;
+
+                    Vector3 horizontalDifference = candidatePosition - targetPosition;
+                    horizontalDifference.y = 0f;
+
+                    float horizontalDistance = horizontalDifference.magnitude;
+
+                    if (horizontalDistance > studSnapDistance)
+                    {
+                        continue;
+                    }
+
+                    float score = horizontalDistance + verticalDistance * 0.25f;
+
+                    candidates.Add(new BrickSnapCandidate(
+                        candidatePosition,
+                        targetRotation,
+                        score,
+
+                        // The existing brick is above.
+                        otherBrick,
+                        otherBottomStud.X,
+                        otherBottomStud.Z,
+
+                        // The moving brick is below.
+                        _brickData,
+                        ownTopStud.X,
+                        ownTopStud.Z
+                    ));
+                }
+            }
         }
     }
 }

@@ -44,6 +44,7 @@ namespace BrickCode
         private bool _isDragging;
         private bool _isRotateMode;
         private bool _isMouseRotating;
+        private bool _isSingleBrickDrag;
 
         private float _holdDistance;
         private Vector3 _dragOffset;
@@ -121,14 +122,46 @@ namespace BrickCode
          */
         private void HandleMoveMode()
         {
-            if (IsAnyBrickInRotateMode) return;
-            if (_input.LeftMousePressedThisFrame()) TryStartDragging();
-            if (_input.LeftMouseHeld() && _isDragging)
+            if (IsAnyBrickInRotateMode)
+            {
+                return;
+            }
+
+            if (!_isDragging)
+            {
+                if (_input.LeftMousePressedThisFrame())
+                {
+                    TryStartDragging(false);
+                }
+                else if (_input.RightMousePressedThisFrame())
+                {
+                    TryStartDragging(true);
+                }
+            }
+
+            if (!_isDragging)
+            {
+                return;
+            }
+
+            bool dragButtonHeld = _isSingleBrickDrag
+                ? _input.RightMouseHeld()
+                : _input.LeftMouseHeld();
+
+            bool dragButtonReleased = _isSingleBrickDrag
+                ? _input.RightMouseReleasedThisFrame()
+                : _input.LeftMouseReleasedThisFrame();
+
+            if (dragButtonHeld)
             {
                 UpdateHoldDistanceFromScroll();
                 DragAtHoldDistance();
             }
-            if (_input.LeftMouseReleasedThisFrame()) StopDragging();
+
+            if (dragButtonReleased)
+            {
+                StopDragging();
+            }
         }
 
         /**
@@ -172,21 +205,60 @@ namespace BrickCode
          * Try to begin dragging the brick.
          * Checks if the user actually clicked the brick first.
          */
-        private void TryStartDragging()
+        private void TryStartDragging(bool singleBrickOnly)
         {
             _snapper.ClearPendingStudConnection();
+
             Ray ray = _camera.ScreenPointToRay(_input.MousePosition());
-            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, _mover.CollisionMask)) return;
+
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, _mover.CollisionMask))
+            {
+                return;
+            }
+
             DraggableBrick3D draggable = hit.collider.GetComponentInParent<DraggableBrick3D>();
-            if (draggable != this) return;
-            if (BrickSelectionManager.Instance) BrickSelectionManager.Instance.HandleBrickClicked(_brickData);
+
+            if (draggable != this)
+            {
+                return;
+            }
+
+            _isSingleBrickDrag = singleBrickOnly;
+
+            if (singleBrickOnly)
+            {
+                BrickModelRegistry.DisconnectBrick(_brickData);
+
+                if (BrickSelectionManager.Instance)
+                {
+                    BrickSelectionManager.Instance.SelectSingleBrick(_brickData);
+                }
+            }
+            else
+            {
+                if (BrickSelectionManager.Instance)
+                {
+                    BrickSelectionManager.Instance.HandleBrickClicked(_brickData);
+                }
+            }
+
             _isDragging = true;
             IsAnyBrickBeingDragged = true;
             IsAnyBrickBeingMoved = true;
+
             _holdDistance = Vector3.Distance(_camera.transform.position, hit.point);
+
             Vector3 holdPoint = ray.GetPoint(_holdDistance);
             _dragOffset = transform.position - holdPoint;
-            _mover.PrepareMovingModel(_brickData);
+
+            if (singleBrickOnly)
+            {
+                _mover.PrepareSingleBrick(_brickData);
+            }
+            else
+            {
+                _mover.PrepareMovingModel(_brickData);
+            }
         }
 
         /**
@@ -244,6 +316,7 @@ namespace BrickCode
          */
         private void EnterRotateMode()
         {
+            _isSingleBrickDrag = false;
             _isRotateMode = true;
             _isDragging = false;
             _isMouseRotating = false;
@@ -258,6 +331,7 @@ namespace BrickCode
          */
         private void ExitRotateMode()
         {
+            _isSingleBrickDrag = false;
             _isRotateMode = false;
             _isDragging = false;
             _isMouseRotating = false;
@@ -276,9 +350,13 @@ namespace BrickCode
         private void StopDragging()
         {
             _snapper.CommitPendingStudConnection();
+
             _isDragging = false;
+            _isSingleBrickDrag = false;
+
             IsAnyBrickBeingDragged = false;
             IsAnyBrickBeingMoved = false;
+
             _mover.ClearMovingModel();
         }
 
@@ -287,6 +365,7 @@ namespace BrickCode
          */
         private void OnDisable()
         {
+            _isSingleBrickDrag = false;
             _isDragging = false;
             _isRotateMode = false;
             _isMouseRotating = false;

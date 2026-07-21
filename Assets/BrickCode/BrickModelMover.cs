@@ -291,10 +291,19 @@ namespace BrickCode
          */
         private bool IsValidCollisionTarget(Collider otherCollider)
         {
-            bool hasValidCollider = !otherCollider && otherCollider.enabled;
-            bool isNotPartOfMovingModel = !_ownColliders.Contains(otherCollider) && !_movingModelColliders.Contains(otherCollider);
-            bool isBrick = otherCollider.GetComponentInParent<DraggableBrick3D>(); 
-            return hasValidCollider && isNotPartOfMovingModel && isBrick;
+            if (!otherCollider || !otherCollider.enabled) return false;
+            if (_ownColliders.Contains(otherCollider)) return false;
+            if (_movingModelColliders.Contains(otherCollider)) return false;
+            if (!otherCollider.GetComponentInParent<DraggableBrick3D>()) return false;
+            return true;
+        }
+        
+        public void PrepareSingleBrick(BrickObjectData selectedBrick)
+        {
+            _brickData = selectedBrick;
+            ClearMovingModel();
+            if (_brickData) AddMovingObject(_brickData);
+            CacheMovingModelColliders();
         }
 
         /**
