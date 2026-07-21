@@ -32,13 +32,18 @@ namespace BrickCode
                 Keyboard.current.leftAltKey.isPressed ||
                 Keyboard.current.rightAltKey.isPressed;
         }
-
+        
+        
         public static bool CameraControlInputIsActive()
         {
-            if (Mouse.current == null) return false;
+            if (Mouse.current == null)
+            {
+                return false;
+            }
+
             bool middleMouseHeld = Mouse.current.middleButton.isPressed;
-            bool rightMouseHeld = Mouse.current.rightButton.isPressed;
-            return AltOrOptionHeld() || middleMouseHeld || rightMouseHeld;
+
+            return AltOrOptionHeld() || middleMouseHeld;
         }
     }
 }

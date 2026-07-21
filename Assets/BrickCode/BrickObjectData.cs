@@ -189,5 +189,25 @@ namespace BrickCode
         {
             return Vector3.Dot(transform.up, Vector3.up) > 0.95f;
         }
+        
+        public IEnumerable<StudAnchor> GetLocalTopStudAnchors()
+        {
+            for (int x = 0; x < StudWidth; x++)
+            {
+                for (int z = 0; z < StudLength; z++)
+                {
+                    float xPos = x - (StudWidth - 1) / 2f;
+                    float zPos = z - (StudLength - 1) / 2f;
+
+                    Vector3 localPosition = new Vector3(
+                        xPos * StudSpacing,
+                        BodyHeight,
+                        zPos * StudSpacing
+                    );
+
+                    yield return new StudAnchor(x, z, localPosition);
+                }
+            }
+        }
     }
 }

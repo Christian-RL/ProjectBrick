@@ -50,7 +50,7 @@ namespace BrickCode
             {
                 Brick brick = node.GetNodeBrick();
                 BrickObjectData data = GetObjectForBrick(brick);
-                if (!data && !connectedObjects.Contains(data)) connectedObjects.Add(data);
+                if (data && !connectedObjects.Contains(data)) connectedObjects.Add(data);
             }
             return connectedObjects;
         }

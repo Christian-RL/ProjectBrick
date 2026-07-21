@@ -80,6 +80,12 @@ namespace MenuCode
                 StartPlacingBrick();
             }
             GUILayout.Space(10);
+            if (GUILayout.Button("Delete Selected Brick", GUILayout.Height(35)))
+            {
+                Debug.Log("Delete Selected Brick clicked.");
+                DeleteSelectedBrick();
+            }
+            GUILayout.Space(10);
             GUILayout.Label("Colour: " + _selectedColourName);
             GUILayout.BeginHorizontal();
             DrawColourButton("Red", Color.red);
@@ -123,7 +129,7 @@ namespace MenuCode
                 Debug.LogWarning("Invalid brick dimensions. Use positive whole numbers.");
                 return;
             }
-            if (!_previewBrick)
+            if (_previewBrick)
             {
                 Destroy(_previewBrick);
             }
@@ -143,6 +149,20 @@ namespace MenuCode
             Debug.Log(
                 $"Preview brick created: {width}x{length}x{height}, children: {_previewBrick.transform.childCount}"
             );
+        }
+
+        /**
+         * Deletes the currently selected single brick.
+         */
+        private void DeleteSelectedBrick()
+        {
+            if (!BrickSelectionManager.Instance)
+            {
+                Debug.LogWarning("No Brick Selection Manager Found.");
+                return;
+            }
+
+            BrickSelectionManager.Instance.DeleteActiveSelectedBrick();
         }
 
         /**

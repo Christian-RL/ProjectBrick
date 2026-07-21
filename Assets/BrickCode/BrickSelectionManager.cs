@@ -19,6 +19,8 @@ namespace BrickCode
         private readonly List<BrickObjectData> _selectedObjects = new(); //store selected bricks
         private BrickObjectData _lastClickedBrick; //store which brick was clicked last
         private float _lastClickTime = -999f; //-999 so first click never counts as a double click
+        private BrickObjectData _activeSelectedBrick;
+        private BrickSelectionGroupOutline _groupOutline;
 
         public bool HasSelection => _selectedObjects.Count > 0; //true if at least one brick is selected
 
@@ -45,7 +47,12 @@ namespace BrickCode
                 Destroy(gameObject);
                 return;
             }
-            Instance = this;
+            Instance = this;_groupOutline = GetComponent<BrickSelectionGroupOutline>();
+
+            if (!_groupOutline)
+            {
+                _groupOutline = gameObject.AddComponent<BrickSelectionGroupOutline>();
+            }
         }
 
         /**
@@ -78,6 +85,7 @@ namespace BrickCode
                 ClearSelection();
                 return false;
             }
+            _activeSelectedBrick = clickedBrick;
             bool isDoubleClick =
                 _lastClickedBrick == clickedBrick &&
                 Time.unscaledTime - _lastClickTime <= doubleClickSeconds;
@@ -101,7 +109,14 @@ namespace BrickCode
         public void SelectSingleBrick(BrickObjectData brick)
         {
             ClearSelection();
-            if (!brick) return;
+
+            if (!brick)
+            {
+                return;
+            }
+
+            _activeSelectedBrick = brick;
+
             _selectedObjects.Add(brick);
             SetHighlighted(brick, true);
         }
@@ -112,16 +127,44 @@ namespace BrickCode
         public void SelectConnectedStructure(BrickObjectData clickedBrick)
         {
             ClearSelection();
-            if (!clickedBrick) return;
+
+            if (!clickedBrick)
+            {
+                return;
+            }
+
+            _activeSelectedBrick = clickedBrick;
+
             List<BrickObjectData> connectedObjects =
                 BrickModelRegistry.GetConnectedObjects(clickedBrick.Brick);
-            if (connectedObjects.Count == 0) connectedObjects.Add(clickedBrick);
+
+            if (connectedObjects.Count == 0)
+            {
+                connectedObjects.Add(clickedBrick);
+            }
+
             foreach (BrickObjectData connectedObject in connectedObjects)
             {
-                if (!connectedObject) continue;
-                if (_selectedObjects.Contains(connectedObject)) continue;
+                if (!connectedObject)
+                {
+                    continue;
+                }
+
+                if (_selectedObjects.Contains(connectedObject))
+                {
+                    continue;
+                }
+
                 _selectedObjects.Add(connectedObject);
-                SetHighlighted(connectedObject, true);
+            }
+
+            if (_selectedObjects.Count == 1)
+            {
+                SetHighlighted(_selectedObjects[0], true);
+            }
+            else
+            {
+                _groupOutline.Show(_selectedObjects);
             }
         }
 
@@ -130,8 +173,18 @@ namespace BrickCode
          */
         public void ClearSelection()
         {
-            foreach (BrickObjectData selectedObject in _selectedObjects) SetHighlighted(selectedObject, false);
+            foreach (BrickObjectData selectedObject in _selectedObjects)
+            {
+                SetHighlighted(selectedObject, false);
+            }
+
             _selectedObjects.Clear();
+            _activeSelectedBrick = null;
+
+            if (_groupOutline)
+            {
+                _groupOutline.Hide();
+            }
         }
 
         /**
@@ -160,6 +213,67 @@ namespace BrickCode
             BrickSelectionOutline outline = brick.GetComponent<BrickSelectionOutline>();
             if (!outline) outline = brick.gameObject.AddComponent<BrickSelectionOutline>();
             outline.SetHighlighted(highlighted);
+        }
+
+        public void DeleteActiveSelectedBrick()
+        {
+            if (!_activeSelectedBrick)
+            {
+                Debug.Log("No active selected brick to delete.");
+                return;
+            }
+
+            BrickObjectData brickToDelete = _activeSelectedBrick;
+
+            List<BrickObjectData> connectedBeforeDelete = new();
+
+            if (brickToDelete.Brick != null)
+            {
+                connectedBeforeDelete = BrickModelRegistry.GetConnectedObjects(brickToDelete.Brick);
+            }
+
+            Dictionary<BrickObjectData, Pose> originalPoses = new();
+
+            foreach (BrickObjectData brickData in connectedBeforeDelete)
+            {
+                if (!brickData || brickData == brickToDelete)
+                {
+                    continue;
+                }
+
+                originalPoses[brickData] = new Pose(
+                    brickData.transform.position,
+                    brickData.transform.rotation
+                );
+            }
+
+            ClearSelection();
+
+            BrickModelRegistry.DisconnectBrick(brickToDelete);
+
+            Destroy(brickToDelete.gameObject);
+
+            foreach (KeyValuePair<BrickObjectData, Pose> pair in originalPoses)
+            {
+                BrickObjectData brickData = pair.Key;
+
+                if (!brickData)
+                {
+                    continue;
+                }
+
+                brickData.transform.SetPositionAndRotation(
+                    pair.Value.position,
+                    pair.Value.rotation
+                );
+            }
+
+            Physics.SyncTransforms();
+
+            _lastClickedBrick = null;
+            _lastClickTime = -999f;
+
+            Debug.Log("Deleted active selected brick.");
         }
     }
 }
