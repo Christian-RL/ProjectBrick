@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 //checking login comment 2
 using BrickCode;
+using SaveLoadCode;
+
 namespace MenuCode
 {
     /**
@@ -10,7 +12,7 @@ namespace MenuCode
     public class BrickSidebarSpawner : MonoBehaviour
     {
         [SerializeField] private float defaultSpawnDistance = 8f;
-        private readonly Rect _sidebarRect = new Rect(10, 10, 260, 430);
+        private readonly Rect _sidebarRect = new Rect(10, 10, 260, 500);
 
         private string _widthText = "2";
         private string _lengthText = "2";
@@ -84,6 +86,18 @@ namespace MenuCode
             {
                 Debug.Log("Delete Selected Brick clicked.");
                 DeleteSelectedBrick();
+            }
+            GUILayout.Space(10);
+
+            if (GUILayout.Button("Save Model", GUILayout.Height(35)))
+            {
+                SaveModel();
+            }
+
+            GUILayout.Space(10);
+            if (GUILayout.Button("Load Model", GUILayout.Height(35)))
+            {
+                LoadModel();
             }
             GUILayout.Space(10);
             GUILayout.Label("Colour: " + _selectedColourName);
@@ -261,6 +275,28 @@ namespace MenuCode
                 Screen.height - mousePosition.y
             );
             return _sidebarRect.Contains(guiMousePosition);
+        }
+        
+        private void SaveModel()
+        {
+            if (!BrickDatabaseService.Instance)
+            {
+                Debug.LogWarning("No BrickDatabaseService found.");
+                return;
+            }
+
+            BrickDatabaseService.Instance.SaveCurrentModel("My Brick Model");
+        }
+        
+        private void LoadModel()
+        {
+            if (!BrickDatabaseService.Instance)
+            {
+                Debug.LogWarning("No BrickDatabaseService found.");
+                return;
+            }
+
+            BrickDatabaseService.Instance.LoadMostRecentModel();
         }
     }
 }

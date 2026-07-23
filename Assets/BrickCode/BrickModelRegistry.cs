@@ -9,7 +9,14 @@ namespace BrickCode
     public static class BrickModelRegistry
     {
         private static readonly Dictionary<Brick, BrickObjectData> ObjectByBrick = new(); //maps each logic brick to their object data
-
+        private static readonly List<BrickConnection> Connections = new();
+        
+        
+        public static List<BrickConnection> GetConnections()
+        {
+            return new List<BrickConnection>(Connections);
+        }
+        
         /**
          * Add brick object to registry.
          */
@@ -76,6 +83,25 @@ namespace BrickCode
             if (upperStud == null || lowerStud == null) return;
             upperStud.SetNeighbourBrick(lowerBrick);
             lowerStud.SetNeighbourBrick(upperBrick);
+            bool alreadyExists = Connections.Exists(connection =>
+                connection.UpperBrick == upperBrick &&
+                connection.UpperStudX == upperStudX &&
+                connection.UpperStudZ == upperStudZ &&
+                connection.LowerBrick == lowerBrick &&
+                connection.LowerStudX == lowerStudX &&
+                connection.LowerStudZ == lowerStudZ
+            );
+            if (!alreadyExists)
+            {
+                Connections.Add(new BrickConnection(
+                    upperBrick,
+                    upperStudX,
+                    upperStudZ,
+                    lowerBrick,
+                    lowerStudX,
+                    lowerStudZ
+                ));
+            }
             Debug.Log( //remove later
                 $"Connected studs: upper {upperBrick.GetName()}[{upperStudX},{upperStudZ}] " +
                 $"to lower {lowerBrick.GetName()}[{lowerStudX},{lowerStudZ}]"
@@ -89,6 +115,10 @@ namespace BrickCode
         {
             if (!brickData || brickData.Brick == null) return;
             Brick brick = brickData.Brick;
+            Connections.RemoveAll(connection =>
+                connection.UpperBrick == brick ||
+                connection.LowerBrick == brick
+            );
             Stud[,] studs = brick.GetStuds();
             for (int x = 0; x < studs.GetLength(0); x++)
             {
@@ -112,6 +142,12 @@ namespace BrickCode
                 }
             }
             Debug.Log("Disconnected brick from existing model: " + brick.GetName()); //remove later
+        }
+        
+        public static void ClearAll()
+        {
+            ObjectByBrick.Clear();
+            Connections.Clear();
         }
     }
     
