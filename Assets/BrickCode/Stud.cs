@@ -1,28 +1,37 @@
 using UnityEngine;
 
-
 public class Stud
 {
     private Brick Member { get; set; }
     private Brick Neighbour { get; set; }
-    
+
     public Stud(Brick member)
     {
         Member = member;
     }
-    
-    public Brick GetMemberBrick()
+
+    public virtual Brick GetMemberBrick()
     {
         return Member;
     }
 
-    public Brick GetNeighbourBrick()
+    public virtual Brick GetNeighbourBrick()
     {
         return Neighbour;
     }
 
-    public void SetNeighbourBrick(Brick brick)
+    public virtual void SetNeighbourBrick(Brick brick)
     {
         Neighbour = brick;
+    }
+
+    public virtual void ClearNeighbourBrick()
+    {
+        Neighbour = null;
+    }
+
+    public virtual bool HasNeighbourBrick()
+    {
+        return Neighbour != null;
     }
 }
