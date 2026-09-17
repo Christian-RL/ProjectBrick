@@ -19,6 +19,24 @@
 *.db-shm
 *.db-wal
 
+# Credentials and local environment files
+/ProjectBrickToken*
+**/id_rsa
+**/id_rsa.pub
+**/id_dsa
+**/id_dsa.pub
+**/id_ecdsa
+**/id_ecdsa.pub
+**/id_ed25519
+**/id_ed25519.pub
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
 *.blend1.meta
