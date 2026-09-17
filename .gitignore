@@ -11,9 +11,13 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Dd]ependency[Dd]ownloads/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
+*.db
+*.db-shm
+*.db-wal
 
 # Credentials and local environment files
 /ProjectBrickToken*
@@ -54,6 +58,9 @@
 
 # Visual Studio cache directory
 .vs/
+
+# JetBrains IDE project settings
+.idea/
 
 # Gradle cache directory
 .gradle/
