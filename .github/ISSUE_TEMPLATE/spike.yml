@@ -1,0 +1,30 @@
+name: Research spike
+description: Investigate an uncertain technical, data, licensing, or product decision.
+title: "[Spike]: "
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision to make
+      description: State the concrete question this spike must answer.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options to investigate
+      description: Include known alternatives and constraints.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Required output
+      description: Define the evidence, prototype, recommendation, and documentation expected.
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: Timebox and exclusions
+      description: A spike produces a decision; production implementation requires a separate issue.

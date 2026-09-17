@@ -1,8 +1,7 @@
-Personal project I am working on to improve my coding skills.
+# ProjectBrick
 
-Skills working on include:
-- C#
-- Unity
-- SQL
+ProjectBrick is a Unity application for constructing LEGO-style digital models from an accurate part catalog and generating validated step-by-step instructions for recreating those models physically.
 
-It is AI assisted for complex features and bugfixes as I learn. 
+Unity provides the desktop interface and 3D environment, C# contains the application and construction logic, SQLite provides local persistence, and future Python services will support AI research and instruction generation.
+
+The project is in its foundation stage. See the [roadmap](docs/roadmap.md), [contributor guide](CONTRIBUTING.md), and [agent instructions](AGENTS.md) for the current direction and development process.

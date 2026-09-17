@@ -1,0 +1,37 @@
+name: Data source or catalog update
+description: Evaluate or update an external catalog, geometry, colour, connection, or instruction source.
+title: "[Data]: "
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and dataset
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Authoritative URL
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Intended use
+      description: Explain which application capability consumes the data and whether it will be redistributed.
+    validations:
+      required: true
+  - type: textarea
+    id: licence
+    attributes:
+      label: Licence and attribution
+      description: Record the licence, attribution, redistribution, modification, commercial-use, and update terms.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Import and validation plan
+      description: Describe version pinning, hashes, mappings, validation, coverage reporting, and rollback.
+    validations:
+      required: true

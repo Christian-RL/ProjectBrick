@@ -1,0 +1,53 @@
+name: Bug
+description: Report reproducible behavior that differs from the intended result.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary and impact
+      description: Explain what is broken and who or what it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Unity version, operating system, build target, and relevant hardware.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs and evidence
+      description: Attach minimal logs, screenshots, model data, or other non-sensitive evidence.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Fix acceptance criteria
+      placeholder: |
+        - [ ] A focused regression test reproduces the failure.
+        - [ ] The fix passes the regression test.
+        - [ ] Relevant documentation is updated.
