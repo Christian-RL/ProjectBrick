@@ -109,3 +109,4 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host 'Repository policy checks passed.'
+exit 0
