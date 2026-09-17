@@ -11,9 +11,13 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Dd]ependency[Dd]ownloads/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
+*.db
+*.db-shm
+*.db-wal
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
@@ -36,6 +40,9 @@
 
 # Visual Studio cache directory
 .vs/
+
+# JetBrains IDE project settings
+.idea/
 
 # Gradle cache directory
 .gradle/
