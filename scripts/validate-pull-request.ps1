@@ -56,10 +56,40 @@ $deletedPaths = @(Get-ChangedPaths 'D' $baseSha $headSha)
 $allPaths = @($activePaths + $deletedPaths | Sort-Object -Unique)
 
 $forbiddenPattern = '^(Library|Temp|Logs|obj|UserSettings|\.vs)/'
+$credentialFilePattern = '(^|/)(ProjectBrickToken(\.pub)?|id_(rsa|dsa|ecdsa|ed25519)(\.pub)?|[^/]+\.(pem|key|p12|pfx))$'
 foreach ($path in $allPaths) {
     if ($path -match $forbiddenPattern) {
         Add-Failure "Generated or user-local path must not be committed: $path"
     }
+
+    if ($path -match $credentialFilePattern) {
+        Add-Failure "Credential-like file must not be committed: $path"
+    }
+}
+
+$privateKeyMarkers = @(
+    ('-----BEGIN ' + 'OPENSSH PRIVATE KEY-----'),
+    ('-----BEGIN ' + 'RSA PRIVATE KEY-----'),
+    ('-----BEGIN ' + 'EC PRIVATE KEY-----'),
+    ('-----BEGIN ' + 'DSA PRIVATE KEY-----'),
+    ('-----BEGIN ' + 'PRIVATE KEY-----')
+)
+
+$grepArguments = @('grep', '-I', '-l', '-F')
+foreach ($marker in $privateKeyMarkers) {
+    $grepArguments += @('-e', $marker)
+}
+$grepArguments += @($headSha, '--', '.')
+
+$privateKeyPaths = @(& git @grepArguments 2>$null)
+$grepExitCode = $LASTEXITCODE
+if ($grepExitCode -eq 0) {
+    foreach ($path in $privateKeyPaths) {
+        Add-Failure "Private-key material detected in repository file: $path"
+    }
+}
+elseif ($grepExitCode -ne 1) {
+    throw 'git grep failed while scanning for private-key material.'
 }
 
 $maximumFileSize = 50MB
